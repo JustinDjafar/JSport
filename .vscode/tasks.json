@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "process",
+      "command": "${workspaceFolder}\\.dotnet\\dotnet.exe",
+      "args": ["build", "${workspaceFolder}\\JSport.slnx"],
+      "problemMatcher": "$msCompile",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "test",
+      "type": "process",
+      "command": "${workspaceFolder}\\.dotnet\\dotnet.exe",
+      "args": ["test", "${workspaceFolder}\\JSport.slnx"],
+      "problemMatcher": "$msCompile",
+      "group": "test"
+    },
+    {
+      "label": "run-api",
+      "type": "process",
+      "command": "${workspaceFolder}\\.dotnet\\dotnet.exe",
+      "args": ["run", "--project", "${workspaceFolder}\\src\\JSport.Api\\JSport.Api.csproj"],
+      "problemMatcher": "$msCompile",
+      "isBackground": true
+    }
+  ]
+}

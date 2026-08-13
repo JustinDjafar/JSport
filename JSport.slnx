@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/JSport.Api/JSport.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/JSport.Api.Tests/JSport.Api.Tests.csproj" />
+  </Folder>
+</Solution>
