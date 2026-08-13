@@ -56,6 +56,47 @@ public sealed class BookingService(JSportDbContext db, TimeProvider timeProvider
         throw new BookingConflictException("All courts are already reserved for the selected time.");
     }
 
+    public async Task<BookingGroupResponse> CreateGroupAsync(CreateBookingGroupRequest request, CancellationToken cancellationToken)
+    {
+        var now = timeProvider.GetUtcNow();
+        BookingRules.ValidateTime(request.StartsAt, request.EndsAt, now);
+        if (request.CourtCount < 1)
+            throw new BookingValidationException("At least one court must be requested.");
+
+        await db.Bookings
+            .Where(x => x.Court.VenueId == request.VenueId && x.Status == BookingStatus.PendingPayment && x.HoldExpiresAt <= now)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.Status, BookingStatus.Expired).SetProperty(x => x.UpdatedAt, now), cancellationToken);
+
+        var startsAt = request.StartsAt.ToUniversalTime();
+        var endsAt = request.EndsAt.ToUniversalTime();
+        var courts = await db.Courts.Include(x => x.Venue)
+            .Where(x => x.VenueId == request.VenueId && x.IsActive && x.Venue.IsActive &&
+                !x.Bookings.Any(b => (b.Status == BookingStatus.Confirmed || (b.Status == BookingStatus.PendingPayment && b.HoldExpiresAt > now)) && b.StartsAt < endsAt && startsAt < b.EndsAt))
+            .OrderBy(x => x.Name).Take(request.CourtCount).ToListAsync(cancellationToken);
+
+        if (courts.Count < request.CourtCount)
+            throw new BookingConflictException($"Only {courts.Count} courts are available for the selected time.");
+
+        var holdExpiresAt = now.Add(HoldDuration);
+        var bookings = courts.Select(court => new Booking
+        {
+            Id = Guid.NewGuid(), BookingCode = $"JSP-{now:yyyyMMdd}-{Guid.NewGuid():N}"[..22].ToUpperInvariant(), CourtId = court.Id,
+            CustomerName = request.CustomerName.Trim(), CustomerEmail = request.CustomerEmail.Trim().ToLowerInvariant(), CustomerPhone = request.CustomerPhone.Trim(),
+            StartsAt = startsAt, EndsAt = endsAt, TotalAmount = BookingRules.CalculateTotal(court.PricePerHour, startsAt, endsAt),
+            Status = BookingStatus.PendingPayment, HoldExpiresAt = holdExpiresAt, CreatedAt = now, UpdatedAt = now, Court = court
+        }).ToList();
+
+        db.Bookings.AddRange(bookings);
+        try { await db.SaveChangesAsync(cancellationToken); }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.ExclusionViolation })
+        {
+            throw new BookingConflictException("One or more requested courts were just reserved. Please choose again.");
+        }
+
+        var responses = bookings.Select(Map).ToList();
+        return new BookingGroupResponse(responses, responses.Count, responses.Sum(x => x.TotalAmount), holdExpiresAt);
+    }
+
     public async Task<BookingResponse?> GetAsync(string bookingCode, CancellationToken cancellationToken)
     {
         var booking = await db.Bookings

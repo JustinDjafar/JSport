@@ -38,6 +38,13 @@ export type CreateBooking = {
   endsAt: string
 }
 
+export type BookingGroup = {
+  bookings: Booking[]
+  courtCount: number
+  totalAmount: number
+  holdExpiresAt: string
+}
+
 export type AvailabilitySlot = {
   startsAt: string
   endsAt: string
@@ -74,6 +81,10 @@ export const api = {
     return request<AvailabilitySlot[]>(`/api/venues/${venueId}/availability?${query}`)
   },
   createBooking: (booking: CreateBooking) => request<Booking>('/api/bookings', {
+    method: 'POST',
+    body: JSON.stringify(booking),
+  }),
+  createBookingGroup: (booking: CreateBooking & { courtCount: number }) => request<BookingGroup>('/api/bookings/group', {
     method: 'POST',
     body: JSON.stringify(booking),
   }),

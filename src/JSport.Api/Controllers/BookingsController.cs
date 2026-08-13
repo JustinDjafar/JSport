@@ -27,6 +27,25 @@ public sealed class BookingsController(BookingService bookingService) : Controll
         }
     }
 
+    [HttpPost("group")]
+    [ProducesResponseType<BookingGroupResponse>(StatusCodes.Status201Created)]
+    public async Task<ActionResult<BookingGroupResponse>> CreateGroup(CreateBookingGroupRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var group = await bookingService.CreateGroupAsync(request, cancellationToken);
+            return StatusCode(StatusCodes.Status201Created, group);
+        }
+        catch (BookingValidationException exception)
+        {
+            return BadRequest(new ProblemDetails { Title = "Invalid booking", Detail = exception.Message, Status = 400 });
+        }
+        catch (BookingConflictException exception)
+        {
+            return Conflict(new ProblemDetails { Title = "Time slot unavailable", Detail = exception.Message, Status = 409 });
+        }
+    }
+
     [HttpGet("{bookingCode}")]
     public async Task<ActionResult<BookingResponse>> Get(string bookingCode, CancellationToken cancellationToken)
     {
