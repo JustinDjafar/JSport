@@ -5,9 +5,7 @@ public sealed class Booking
     public Guid Id { get; set; }
     public required string BookingCode { get; set; }
     public Guid CourtId { get; set; }
-    public required string CustomerName { get; set; }
-    public required string CustomerEmail { get; set; }
-    public required string CustomerPhone { get; set; }
+    public Guid UserId { get; set; }
     public DateTimeOffset StartsAt { get; set; }
     public DateTimeOffset EndsAt { get; set; }
     public long TotalAmount { get; set; }
@@ -18,4 +16,5 @@ public sealed class Booking
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public Court Court { get; set; } = null!;
+    public User User { get; set; } = null!;
 }

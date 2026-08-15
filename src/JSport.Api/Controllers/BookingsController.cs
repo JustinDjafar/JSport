@@ -1,20 +1,29 @@
 using JSport.Api.Contracts.Bookings;
 using JSport.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace JSport.Api.Controllers;
 
-[ApiController]
+[ApiController, Authorize]
 [Route("api/bookings")]
 public sealed class BookingsController(BookingService bookingService) : ControllerBase
 {
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<BookingResponse>>> History(CancellationToken cancellationToken)
+    {
+        var bookings = await bookingService.GetHistoryAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!, cancellationToken);
+        return Ok(bookings);
+    }
+
     [HttpPost]
     [ProducesResponseType<BookingResponse>(StatusCodes.Status201Created)]
     public async Task<ActionResult<BookingResponse>> Create(CreateBookingRequest request, CancellationToken cancellationToken)
     {
         try
         {
-            var booking = await bookingService.CreateAsync(request, cancellationToken);
+            var booking = await bookingService.CreateAsync(request, User.FindFirstValue(ClaimTypes.NameIdentifier)!, cancellationToken);
             return CreatedAtAction(nameof(Get), new { bookingCode = booking.BookingCode }, booking);
         }
         catch (BookingValidationException exception)
@@ -33,7 +42,7 @@ public sealed class BookingsController(BookingService bookingService) : Controll
     {
         try
         {
-            var group = await bookingService.CreateGroupAsync(request, cancellationToken);
+            var group = await bookingService.CreateGroupAsync(request, User.FindFirstValue(ClaimTypes.NameIdentifier)!, cancellationToken);
             return StatusCode(StatusCodes.Status201Created, group);
         }
         catch (BookingValidationException exception)
@@ -49,7 +58,7 @@ public sealed class BookingsController(BookingService bookingService) : Controll
     [HttpGet("{bookingCode}")]
     public async Task<ActionResult<BookingResponse>> Get(string bookingCode, CancellationToken cancellationToken)
     {
-        var booking = await bookingService.GetAsync(bookingCode, cancellationToken);
+        var booking = await bookingService.GetAsync(bookingCode, User.FindFirstValue(ClaimTypes.NameIdentifier)!, cancellationToken);
         return booking is null ? NotFound() : Ok(booking);
     }
 }

@@ -1,3 +1,4 @@
+#if false // Venue support removed; retained only to keep migration history readable.
 using JSport.Api.Data;
 using JSport.Api.Domain;
 using Microsoft.AspNetCore.Mvc;
@@ -72,3 +73,4 @@ public sealed class VenuesController(JSportDbContext db, TimeProvider timeProvid
         return Ok(slots);
     }
 }
+#endif

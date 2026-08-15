@@ -7,7 +7,6 @@ public sealed record BookingResponse(
     string BookingCode,
     Guid CourtId,
     string CourtName,
-    string VenueName,
     string CustomerName,
     string CustomerEmail,
     string CustomerPhone,
