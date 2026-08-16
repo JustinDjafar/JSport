@@ -8,9 +8,12 @@ import HistoryPage from './HistoryPage'
 import AdminBookingsPage from './AdminBookingsPage'
 import FacilitiesPage from './FacilitiesPage'
 import RulesPage from './RulesPage'
+import { LanguageProvider, useLanguage } from './LanguageContext'
+import SiteFooter from './SiteFooter'
 
 function EventPage() {
-  return <div className="empty-event-page"><SiteHeader active="events" /><main><span>EVENTS</span><h1>Coming soon.</h1><p>Our events calendar is being prepared.</p><a href="/">Return home</a></main></div>
+  const { language } = useLanguage()
+  return <div className="empty-event-page"><SiteHeader active="events" /><main><span>{language === 'id' ? 'ACARA' : 'EVENTS'}</span><h1>{language === 'id' ? 'Segera hadir.' : 'Coming soon.'}</h1><p>{language === 'id' ? 'Kalender acara kami sedang disiapkan.' : 'Our events calendar is being prepared.'}</p><a href="/">{language === 'id' ? 'Kembali ke beranda' : 'Return home'}</a></main></div>
 }
 
 const routes: Record<string, React.ComponentType> = { '/event': EventPage, '/events': EventPage, '/facilities': FacilitiesPage, '/rules': RulesPage, '/history': HistoryPage, '/bookings': AdminBookingsPage, '/admin/bookings': AdminBookingsPage, '/forgot-password': ForgotPasswordPage, '/reset-password': ResetPasswordPage }
@@ -22,11 +25,11 @@ function Router() {
     return () => window.removeEventListener('popstate', update)
   }, [])
   const Page = routes[path] ?? App
-  return <Page />
+  return <><Page /><SiteFooter /></>
 }
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Router />
+    <LanguageProvider><Router /></LanguageProvider>
   </StrictMode>,
 )
